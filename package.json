@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@huggingface/transformers": "^3.7.2",
+    "pdfjs-dist": "^5.4.149"
+  }
+}
