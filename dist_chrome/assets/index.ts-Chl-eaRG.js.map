@@ -1,0 +1,1 @@
+{"version":3,"file":"index.ts-Chl-eaRG.js","sources":["../../src/pages/background/index.ts"],"sourcesContent":["console.log('background script loaded');\n"],"names":[],"mappings":"AAAA,QAAQ,IAAI,0BAA0B"}
