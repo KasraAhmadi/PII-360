@@ -12,7 +12,6 @@ GlobalWorkerOptions.workerSrc = pdfWorker;
 
 type Screen = 'first' | 'second' | 'loading';
 
-
 export interface PdfPage {
   pageNum: number;
   text: string;
@@ -38,12 +37,9 @@ export async function processPdf(file: File): Promise<string> {
     documentInfo: "Document processing started",
   };
 
-
-
   try {
     // Convert File → ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
-
     // Load PDF
     const loadingTask = getDocument({ data: arrayBuffer });
     const doc: PDFDocumentProxy = await loadingTask.promise;
@@ -90,7 +86,7 @@ export default function Popup() {
 
       if (data.text) {
         const message = {
-          action: "classify",
+          action: "text",
           text: data.text
         }
         chrome.runtime.sendMessage(message)
@@ -110,10 +106,9 @@ export default function Popup() {
         if (data.file.type == "application/pdf") {
           const pdfData = await processPdf(data.file);
           const message = {
-            action: "classify",
+            action: "text",
             text: pdfData
           }
-          console.log(message)
           chrome.runtime.sendMessage(message)
             .then(async (response: Array<any>) => {
               results = await post_process_PII(response);
@@ -140,12 +135,7 @@ export default function Popup() {
               console.error('Error sending message:', err);
             });
         }
-
-
-
       }
-
-
     } catch (error) {
       console.error('Error processing data:', error);
       setCurrentScreen('first');
