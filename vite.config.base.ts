@@ -17,7 +17,6 @@ const localize = false;
 export const baseManifest = {
     ...manifest,
     version: pkg.version,
-    ...(isDev ? devManifest : {} as ManifestV3Export),
     ...(localize ? {
       name: '__MSG_extName__',
       description: '__MSG_extDescription__',

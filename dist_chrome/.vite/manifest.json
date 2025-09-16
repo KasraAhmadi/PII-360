@@ -1,16 +1,20 @@
 {
-  "../../../../../../@crx/manifest": {
-    "file": "assets/crx-manifest.js-PrUnUt2W.js",
+  "../../../../../@crx/manifest": {
+    "file": "assets/crx-manifest.js-B0A4T6mm.js",
     "name": "crx-manifest.js",
-    "src": "../../../../../../@crx/manifest",
+    "src": "../../../../../@crx/manifest",
     "isEntry": true
   },
   "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm": {
     "file": "assets/ort-wasm-simd-threaded.jsep-B0T3yYHD.wasm",
     "src": "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm"
   },
+  "node_modules/pdfjs-dist/build/pdf.worker.mjs": {
+    "file": "assets/pdf.worker-BQQyum15.mjs",
+    "src": "node_modules/pdfjs-dist/build/pdf.worker.mjs"
+  },
   "src/pages/background/index.js": {
-    "file": "assets/index.js-BiI0vH2y.js",
+    "file": "assets/index.js-IHdik7Zc.js",
     "name": "index.js",
     "src": "src/pages/background/index.js",
     "isEntry": true,
@@ -19,12 +23,15 @@
     ]
   },
   "src/pages/popup/index.html": {
-    "file": "assets/index.html-Cz_Miyjb.js",
+    "file": "assets/index.html-Dt8rF2Yv.js",
     "name": "index.html",
     "src": "src/pages/popup/index.html",
     "isEntry": true,
     "css": [
-      "assets/index-BgpDWbAH.css"
+      "assets/index-BnjhUdnJ.css"
+    ],
+    "assets": [
+      "assets/pdf.worker-BQQyum15.mjs"
     ]
   }
 }

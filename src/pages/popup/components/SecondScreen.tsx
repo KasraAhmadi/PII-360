@@ -5,16 +5,13 @@ import { ScrollArea } from './ui/scroll-area';
 import { ArrowLeft, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
-interface PIIItem {
+
+ interface PIIItem {
   id: string;
-  text: string;
-  type: string;
-  confidence: number;
-  position: {
-    start: number;
-    end: number;
-  };
+  word: string;
+  category: string;
 }
+
 
 interface SecondScreenProps {
   piiItems: PIIItem[];
@@ -57,10 +54,10 @@ export function SecondScreen({ piiItems, onBack }: SecondScreenProps) {
   };
 
   const groupedPII = piiItems.reduce((acc, item) => {
-    if (!acc[item.type]) {
-      acc[item.type] = [];
+    if (!acc[item.category]) {
+      acc[item.category] = [];
     }
-    acc[item.type].push(item);
+    acc[item.category].push(item);
     return acc;
   }, {} as Record<string, PIIItem[]>);
 
@@ -126,18 +123,18 @@ export function SecondScreen({ piiItems, onBack }: SecondScreenProps) {
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center space-x-2">
                           <code className="bg-muted px-2 py-1 rounded text-sm">
-                            {maskText(item.text, item.type)}
+                            {maskText(item.word, item.category)}
                           </code>
                           <Badge 
-                            className={getPIITypeColor(item.type)}
+                            className={getPIITypeColor(item.category)}
                             variant="outline"
                           >
-                            {item.type}
+                            {item.category}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        {/* <p className="text-sm text-muted-foreground">
                           Confidence: {Math.round(item.confidence * 100)}%
-                        </p>
+                        </p> */}
                       </div>
                     </div>
                   ))}

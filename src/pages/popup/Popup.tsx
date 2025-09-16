@@ -1,15 +1,80 @@
 import { useState } from 'react';
 import { FirstScreen } from './components/FirstScreen';
 import { SecondScreen } from './components/SecondScreen';
-import { detectPIIInText, processFile } from './utils/piiDetection';
-import type { PIIItem } from './utils/piiDetection';
+import { post_process_PII } from './utils/piiDetection';
+import type { PII } from './utils/piiDetection';
 import { Loader2 } from 'lucide-react';
+import { getDocument, PDFDocumentProxy, PDFPageProxy, GlobalWorkerOptions } from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
+
+// Configure worker
+GlobalWorkerOptions.workerSrc = pdfWorker;
 
 type Screen = 'first' | 'second' | 'loading';
 
+export interface PdfPage {
+  pageNum: number;
+  text: string;
+  processedAt: string;
+}
+
+export interface PdfData {
+  pages: PdfPage[];
+  documentInfo: string;
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file); // encodes as base64
+  });
+}
+export async function processPdf(file: File): Promise<string> {
+  const PdfData: PdfData = {
+    pages: [],
+    documentInfo: "Document processing started",
+  };
+
+  try {
+    // Convert File → ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    // Load PDF
+    const loadingTask = getDocument({ data: arrayBuffer });
+    const doc: PDFDocumentProxy = await loadingTask.promise;
+
+    await doc.getMetadata().catch(() => { }); // optional metadata
+
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page: PDFPageProxy = await doc.getPage(i);
+      const content = await page.getTextContent();
+
+      const strings = content.items.map((item: any) => item.str);
+      const str_val = strings.join(" ");
+
+      PdfData.pages.push({
+        pageNum: i,
+        text: str_val,
+        processedAt: new Date().toISOString(),
+      });
+
+      page.cleanup();
+    }
+
+    PdfData.documentInfo = `Processed ${doc.numPages} pages`;
+    const allText: string = PdfData.pages.map(page => page.text).join("\n\n");
+
+    return allText;
+  } catch (err) {
+    console.error("Error while processing PDF:", err);
+    throw err;
+  }
+}
+
 export default function Popup() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('first');
-  const [piiResults, setPiiResults] = useState<PIIItem[]>([]);
+  const [piiResults, setPiiResults] = useState<PII[]>([]);
   const [originalText, setOriginalText] = useState<string>('');
 
   const handleSubmit = async (data: { text?: string; file?: File }) => {
@@ -17,30 +82,60 @@ export default function Popup() {
     setCurrentScreen('loading');
 
     try {
-      let results: PIIItem[] = [];
+      let results: PII[] = [];
 
       if (data.text) {
         const message = {
-          action: "classify",
+          action: "text",
           text: data.text
         }
         chrome.runtime.sendMessage(message)
-          .then((response) => {
-            console.log('received user data', response);
+          .then(async (response: Array<any>) => {
+            results = await post_process_PII(response);
+            setPiiResults(results);
+            setCurrentScreen('second');
           })
           .catch((err) => {
             console.error('Error sending message:', err);
           });
 
         setOriginalText(data.text);
-        results = detectPIIInText(data.text);
-      } else if (data.file) {
-        setOriginalText(`[File: ${data.file.name}]`);
-        results = await processFile(data.file);
       }
 
-      setPiiResults(results);
-      setCurrentScreen('second');
+      else if (data.file) {
+        if (data.file.type == "application/pdf") {
+          const pdfData = await processPdf(data.file);
+          const message = {
+            action: "text",
+            text: pdfData
+          }
+          chrome.runtime.sendMessage(message)
+            .then(async (response: Array<any>) => {
+              results = await post_process_PII(response);
+              setPiiResults(results);
+              setCurrentScreen('second');
+            })
+            .catch((err) => {
+              console.error('Error sending message:', err);
+            });
+        } else if(data.file.type == "image/jpeg"){
+          const base64 = await fileToBase64(data.file);
+
+          const message = {
+            action: "image",
+            text: base64
+          }
+          chrome.runtime.sendMessage(message)
+            .then(async (response: Array<any>) => {
+              results = await post_process_PII(response);
+              setPiiResults(results);
+              setCurrentScreen('second');
+            })
+            .catch((err) => {
+              console.error('Error sending message:', err);
+            });
+        }
+      }
     } catch (error) {
       console.error('Error processing data:', error);
       setCurrentScreen('first');

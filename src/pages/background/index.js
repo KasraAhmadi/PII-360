@@ -1,91 +1,197 @@
-// console.log('background script loaded');
-// import { pipeline } from '@huggingface/transformers';
-// // import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
-// const classifier = await pipeline('token-classification', 'onnx-community/llama-ai4privacy-multilingual-categorical-anonymiser-openpii-ONNX');
 
-// const mockFileContent = `
-// Dear John Smith,
-
-// Thank you for contacting us. Your account information:
-// Email: john.smith@email.com
-// Phone: (555) 123-4567
-// Address: 123 Main Street, Anytown, CA 90210
-// SSN: 123-45-6789
-
-// Best regards,
-// Customer Service Team`;
-// const output = await classifier(mockFileContent);
-// // console.log(output)
-
+function hasWebGPU() {
+  return typeof navigator !== "undefined" && "gpu" in navigator;
+}
+function base64ToBlob(base64, contentType = "image/png") {
+  const byteChars = atob(base64.split(",")[1]);
+  const byteNumbers = new Array(byteChars.length);
+  for (let i = 0; i < byteChars.length; i++) {
+    byteNumbers[i] = byteChars.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: contentType });
+}
 // background.js - Handles requests from the UI, runs the model, then sends back a response
-console.log("Kasra")
+chrome.action.onClicked.addListener(() => {
+  chrome.tabs.create({ url: "src/pages/popup/index.html" });
+});
 
-import { env, pipeline } from "@huggingface/transformers";
-// If you'd like to use a local model instead of loading the model
-// from the Hugging Face Hub, you can remove this line.
+import {
+  AutoProcessor,
+  AutoModelForImageTextToText,
+  load_image,
+  TextStreamer, env, pipeline, AutoTokenizer
+} from "@huggingface/transformers";
+
 env.allowLocalModels = false;
 
-/**
- * Wrap the pipeline construction in a Singleton class to ensure:
- * (1) the pipeline is only loaded once, and
- * (2) the pipeline can be loaded lazily (only when needed).
- */
-class Singleton {
+
+class PIIDetector {
+  static tokenizer = null;
+  static pipelineInstance = null;
+  static pipelineFn = null;
+  static promiseChain = null;
+
   static async getInstance(progress_callback) {
-    // Return a function which does the following:
-    // - Load the pipeline if it hasn't been loaded yet
-    // - Run the pipeline, waiting for previous executions to finish if needed
-    return (this.fn ??= async (...args) => {
-      this.instance ??= pipeline(
-        'token-classification', 
-        'onnx-community/llama-ai4privacy-multilingual-categorical-anonymiser-openpii-ONNX',
+  const device = hasWebGPU() ? "webgpu" : "wasm";
+  console.log(`Loading pipeline on device: ${device}`);
+    return (this.pipelineFn ??= async (...args) => {
+      this.pipelineInstance ??= pipeline(
+        'token-classification',
+        'onnx-community/piiranha-v1-detect-personal-information-ONNX',
         {
           progress_callback,
-          device: "webgpu",
-          dtype: "q4",
+          device: device,
+          dtype: "q4"
         },
       );
 
-      return (this.promise_chain = (
-        this.promise_chain ?? Promise.resolve()
-      ).then(async () => (await this.instance)(...args)));
+      return (this.promiseChain = (
+        this.promiseChain ?? Promise.resolve()
+      ).then(async () => (await this.pipelineInstance)(...args)));
     });
+  }
+
+  static async classifyText(message, progress_callback) {
+    // Load tokenizer lazily
+    if (!this.tokenizer) {
+      this.tokenizer = await AutoTokenizer.from_pretrained(
+        'onnx-community/piiranha-v1-detect-personal-information-ONNX'
+      );
+    }
+
+    const maxLength = 256;
+
+    // Tokenize input text
+    const encoding = await this.tokenizer(message.text, { add_special_tokens: true });
+
+    const inputIdsArray = Array.from(encoding.input_ids.ort_tensor.cpuData);
+
+    // Chunk input IDs
+    const tokenChunks = [];
+    for (let i = 0; i < inputIdsArray.length; i += maxLength) {
+      tokenChunks.push(inputIdsArray.slice(i, i + maxLength));
+    }
+
+    // Decode chunks back to text
+    const textChunks = await Promise.all(
+      tokenChunks.map(ids =>
+        this.tokenizer.decode(ids, { skip_special_tokens: true })
+      )
+    );
+
+    const classifier = await this.getInstance(progress_callback);
+    console.log("PII model is loaded")
+
+    let results = [];
+    for (const chunk of textChunks) {
+      const output = await classifier(chunk);
+      results = results.concat(output);
+    }
+
+    return results;
   }
 }
 
-// Create generic classify function, which will be reused for the different types of events.
-const classify = async (text) => {
-  // Get the pipeline instance. This will load and build the model when run for the first time.
-  const classifier = await Singleton.getInstance((data) => {
-    console.log(data)
-    // You can track the progress of the pipeline creation here.
-    // e.g., you can send `data` back to the UI to indicate a progress bar
-    // console.log(data)
-  });
+class VLM {
+  static instance = null;
+  static processor = null;
 
-  // Run the model on the input text
-  const result = await classifier(text);
-  return result;
-};
+  // Lazy-load singleton model
+  static async getInstance(progress_callback) {
+    if (!this.instance) {
+      this.instance = await AutoModelForImageTextToText.from_pretrained(
+        "onnx-community/FastVLM-0.5B-ONNX",
+        {
+          dtype: {
+            embed_tokens: "q4",
+            vision_encoder: "q4",
+            decoder_model_merged: "q4",
+          },
+          progress_callback,
+          device: "webgpu",
+        }
+      );
+    }
+    return this.instance;
+  }
 
-////////////////////// 2. Message Events /////////////////////
-//
-// Listen for messages from the UI, process it, and send the result back.
+  // Inference function (refactored from VLM_inference)
+  static async infer(file, progress_callback) {
+    // Load processor lazily
+    if (!this.processor) {
+      this.processor = await AutoProcessor.from_pretrained(
+        "onnx-community/FastVLM-0.5B-ONNX"
+      );
+    }
+
+    const vlmModel = await this.getInstance(progress_callback);
+    console.log("VLM model is loaded")
+
+    const messages = [
+      {
+        role: "user",
+        content: "<image>Describe this image in detail. Include all PII you find in response.",
+      },
+    ];
+
+    const prompt = this.processor.apply_chat_template(messages, {
+      add_generation_prompt: true,
+    });
+
+    // Convert base64 to Blob
+    const blob = base64ToBlob(file);
+    const image = await load_image(blob);
+
+    // Prepare inputs for model
+    const inputs = await this.processor(image, prompt, {
+      add_special_tokens: false,
+    });
+
+    // Run inference with streaming
+    const outputs = await vlmModel.generate({
+      ...inputs,
+      max_new_tokens: 512,
+      do_sample: false,
+      streamer: new TextStreamer(this.processor.tokenizer, {
+        skip_prompt: true,
+        skip_special_tokens: false,
+      }),
+    });
+
+    // Decode outputs
+    const decoded = this.processor.batch_decode(
+      outputs.slice(null, [inputs.input_ids.dims.at(-1), null]),
+      { skip_special_tokens: true }
+    );
+    return decoded;
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action !== "classify") return; // Ignore messages that are not meant for classification.
+  if (message.action == "text") {
+    (async function () {
+      // Perform classification
+      const result = await PIIDetector.classifyText({ text: message.text });
+      // Send response back to UI
+      sendResponse(result);
+    })();
+  }
+  else if (message.action == "image") {
+    (async function () {
+      const vlm_output = await VLM.infer(message.text);
+      console.log("VLM Output:", vlm_output);
+      const result = await PIIDetector.classifyText({ text: vlm_output[0]});
+      sendResponse(result);
+    })();
+
+  }
 
   // Run model prediction asynchronously
-  (async function () {
-    // Perform classification
-    const result = await classify(message.text);
 
-    // Send response back to UI
-    sendResponse(result);
-  })();
 
   // return true to indicate we will send a response asynchronously
   // see https://stackoverflow.com/a/46628145 for more information
   return true;
 });
-
 
