@@ -13,10 +13,10 @@ export function FirstScreen({ onSubmit }: FirstScreenProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      setText(''); // Clear text when file is selected
     }
   };
 
@@ -68,21 +68,24 @@ export function FirstScreen({ onSubmit }: FirstScreenProps) {
             <input
               id="file-upload"
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.txt"
+              accept=".pdf,.jpg,.jpeg,.png"
               onChange={handleFileChange}
               className="hidden"
             />
             <Button
               variant="outline"
               className="w-full h-auto p-4 border-dashed"
-              onClick={() => document.getElementById('file-upload')?.click()}
+              onClick={(e) => {
+                document.getElementById('file-upload')?.click()
+              }}
+
             >
               <div className="flex flex-col items-center space-y-2">
                 <Upload className="h-6 w-6 text-muted-foreground" />
                 <div className="text-center">
                   <p className="text-sm">Click to upload</p>
                   <p className="text-xs text-muted-foreground">
-                    PDF, JPG, PNG, TXT files
+                    PDF, JPG, PNG files
                   </p>
                 </div>
               </div>

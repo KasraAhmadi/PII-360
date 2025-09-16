@@ -300,12 +300,24 @@
   resolved "https://registry.npmjs.org/@img/sharp-libvips-linux-x64/-/sharp-libvips-linux-x64-1.2.0.tgz"
   integrity sha512-ZW3FPWIc7K1sH9E3nxIGB3y3dZkpJlMnkk7z5tu1nSkBoCgw2nSRTFHI5pB/3CQaJM0pdzMF3paf9ckKMSE9Tg==
 
+"@img/sharp-libvips-linuxmusl-x64@1.2.0":
+  version "1.2.0"
+  resolved "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-x64/-/sharp-libvips-linuxmusl-x64-1.2.0.tgz"
+  integrity sha512-SRYOLR7CXPgNze8akZwjoGBoN1ThNZoqpOgfnOxmWsklTGVfJiGJoC/Lod7aNMGA1jSsKWM1+HRX43OP6p9+6Q==
+
 "@img/sharp-linux-x64@0.34.3":
   version "0.34.3"
   resolved "https://registry.npmjs.org/@img/sharp-linux-x64/-/sharp-linux-x64-0.34.3.tgz"
   integrity sha512-8kYso8d806ypnSq3/Ly0QEw90V5ZoHh10yH0HnrzOCr6DKAPI6QVHvwleqMkVQ0m+fc7EH8ah0BB0QPuWY6zJQ==
   optionalDependencies:
     "@img/sharp-libvips-linux-x64" "1.2.0"
+
+"@img/sharp-linuxmusl-x64@0.34.3":
+  version "0.34.3"
+  resolved "https://registry.npmjs.org/@img/sharp-linuxmusl-x64/-/sharp-linuxmusl-x64-0.34.3.tgz"
+  integrity sha512-gCWUn9547K5bwvOn9l5XGAEjVTTRji4aPTqLzGXHvIr6bIDZKNTA34seMPgM0WmSf+RYBH411VavCejp3PkOeQ==
+  optionalDependencies:
+    "@img/sharp-libvips-linuxmusl-x64" "1.2.0"
 
 "@isaacs/fs-minipass@^4.0.0":
   version "4.0.1"
@@ -347,6 +359,27 @@
   dependencies:
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
+
+"@napi-rs/canvas-linux-x64-gnu@0.1.79":
+  version "0.1.79"
+  resolved "https://registry.npmjs.org/@napi-rs/canvas-linux-x64-gnu/-/canvas-linux-x64-gnu-0.1.79.tgz"
+  integrity sha512-3xZhHlE9e3cd9D7Comy6/TTSs/8PUGXEXymIwYQrA1QxHojAlAOFlVai4rffzXd0bHylZu+/wD76LodvYqF1Yw==
+
+"@napi-rs/canvas@^0.1.77":
+  version "0.1.79"
+  resolved "https://registry.npmjs.org/@napi-rs/canvas/-/canvas-0.1.79.tgz"
+  integrity sha512-0SkvRRjyxY35eniEsQsjPYUMWunKlAWvionJOzJJADZF5ZDf/sL+ncJbMTV5LUiHg1iHOvVjWcuDOx/GNXr/lA==
+  optionalDependencies:
+    "@napi-rs/canvas-android-arm64" "0.1.79"
+    "@napi-rs/canvas-darwin-arm64" "0.1.79"
+    "@napi-rs/canvas-darwin-x64" "0.1.79"
+    "@napi-rs/canvas-linux-arm-gnueabihf" "0.1.79"
+    "@napi-rs/canvas-linux-arm64-gnu" "0.1.79"
+    "@napi-rs/canvas-linux-arm64-musl" "0.1.79"
+    "@napi-rs/canvas-linux-riscv64-gnu" "0.1.79"
+    "@napi-rs/canvas-linux-x64-gnu" "0.1.79"
+    "@napi-rs/canvas-linux-x64-musl" "0.1.79"
+    "@napi-rs/canvas-win32-x64-msvc" "0.1.79"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
@@ -3525,6 +3558,13 @@ pathe@^2.0.1:
   version "2.0.3"
   resolved "https://registry.npmjs.org/pathe/-/pathe-2.0.3.tgz"
   integrity sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==
+
+pdfjs-dist@5.4.149:
+  version "5.4.149"
+  resolved "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-5.4.149.tgz"
+  integrity sha512-Xe8/1FMJEQPUVSti25AlDpwpUm2QAVmNOpFP0SIahaPIOKBKICaefbzogLdwey3XGGoaP4Lb9wqiw2e9Jqp0LA==
+  optionalDependencies:
+    "@napi-rs/canvas" "^0.1.77"
 
 picocolors@^1.1.0, picocolors@^1.1.1:
   version "1.1.1"

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PII 360",
-  "description": "ML based PII detection for text, Pdf, and images",
+  "description": "ML based PII detection for text, Pdf, and imagessssss",
   "background": {
     "service_worker": "service-worker-loader.js",
     "type": "module"
@@ -10,22 +10,26 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'"
   },
   "action": {
-    "default_icon": "public/dev-icon-32.png",
-    "default_popup": "src/pages/popup/index.html"
+    "default_popup": "src/pages/popup/index.html",
+    "default_icon": {
+      "32": "icon-32.png"
+    }
   },
   "icons": {
-    "128": "public/dev-icon-128.png"
+    "128": "icon-128.png"
   },
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "storage",
+    "unlimitedStorage"
   ],
   "web_accessible_resources": [
     {
       "matches": [],
       "resources": [
         "contentStyle.css",
-        "dev-icon-128.png",
-        "dev-icon-32.png"
+        "icon-128.png",
+        "icon-32.png"
       ],
       "use_dynamic_url": false
     }

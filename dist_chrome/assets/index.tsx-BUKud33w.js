@@ -1,2 +1,0 @@
-import{c as n,j as t}from"./client-BOTlC0QG.js";const o=document.createElement("div");o.id="__root";document.body.appendChild(o);const e=document.querySelector("#__root");if(!e)throw new Error("Can't find Content root element");const c=n.createRoot(e);c.render(t.jsxs("div",{className:"absolute bottom-0 left-0 text-lg text-black bg-amber-400 z-50",children:["content script ",t.jsx("span",{className:"your-class",children:"loaded"})]}));try{console.log("content script loaded")}catch(r){console.error(r)}
-//# sourceMappingURL=index.tsx-BUKud33w.js.map

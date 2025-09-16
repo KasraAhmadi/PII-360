@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PII 360",
-  "description": "ML based PII detection for text, Pdf, and images",
+  "description": "ML based PII detection for text, Pdf, and imagessssss",
   "background": {
     "service_worker": "src/pages/background/index.js",
     "type": "module"
@@ -19,7 +19,9 @@
     "128": "icon-128.png"
   },
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "storage",
+    "unlimitedStorage"
   ],
   "web_accessible_resources": [
     {
