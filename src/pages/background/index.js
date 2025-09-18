@@ -38,7 +38,8 @@ class PIIDetector {
     return (this.pipelineFn ??= async (...args) => {
       this.pipelineInstance ??= pipeline(
         'token-classification',
-        'onnx-community/piiranha-v1-detect-personal-information-ONNX',
+        "iiiorg/piiranha-v1-detect-personal-information",
+        //'onnx-community/piiranha-v1-detect-personal-information-ONNX',
         {
           progress_callback,
           device: device,
@@ -56,7 +57,8 @@ class PIIDetector {
     // Load tokenizer lazily
     if (!this.tokenizer) {
       this.tokenizer = await AutoTokenizer.from_pretrained(
-        'onnx-community/piiranha-v1-detect-personal-information-ONNX'
+       "iiiorg/piiranha-v1-detect-personal-information" 
+      //'onnx-community/piiranha-v1-detect-personal-information-ONNX'
       );
     }
 
@@ -86,6 +88,7 @@ class PIIDetector {
     let results = [];
     for (const chunk of textChunks) {
       const output = await classifier(chunk);
+      console.log("classifier output:", JSON.stringify(output, null, 2));
       results = results.concat(output);
     }
 

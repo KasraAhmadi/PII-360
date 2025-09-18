@@ -6,6 +6,7 @@ import type { PII } from './utils/piiDetection';
 import { Loader2 } from 'lucide-react';
 import { getDocument, PDFDocumentProxy, PDFPageProxy, GlobalWorkerOptions } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
+import { highlightPIIInPdf } from './utils/pdfUtils';
 
 // Configure worker
 GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -16,11 +17,14 @@ export interface PdfPage {
   pageNum: number;
   text: string;
   processedAt: string;
+  items: any[];
 }
 
 export interface PdfData {
   pages: PdfPage[];
   documentInfo: string;
+  text: string;
+  items: any[];
 }
 
 function fileToBase64(file: File): Promise<string> {
@@ -31,10 +35,12 @@ function fileToBase64(file: File): Promise<string> {
     reader.readAsDataURL(file); // encodes as base64
   });
 }
-export async function processPdf(file: File): Promise<string> {
-  const PdfData: PdfData = {
+export async function processPdf(file: File): Promise<PdfData> {
+  const pdfData: PdfData = {
     pages: [],
     documentInfo: "Document processing started",
+    text: "",
+    items: [],
   };
 
   try {
@@ -46,6 +52,7 @@ export async function processPdf(file: File): Promise<string> {
 
     await doc.getMetadata().catch(() => { }); // optional metadata
 
+    const allItems: any[] = [];
     for (let i = 1; i <= doc.numPages; i++) {
       const page: PDFPageProxy = await doc.getPage(i);
       const content = await page.getTextContent();
@@ -53,19 +60,28 @@ export async function processPdf(file: File): Promise<string> {
       const strings = content.items.map((item: any) => item.str);
       const str_val = strings.join(" ");
 
-      PdfData.pages.push({
+      pdfData.pages.push({
         pageNum: i,
         text: str_val,
         processedAt: new Date().toISOString(),
+        items: content.items,
       });
+      
+      // Add page index to each item for highlighting
+      const itemsWithPageIndex = content.items.map((item: any) => ({
+        ...item,
+        pageIndex: i - 1  // PDF pages are 0-indexed in pdf-lib
+      }));
+      allItems.push(...itemsWithPageIndex);
 
       page.cleanup();
     }
 
-    PdfData.documentInfo = `Processed ${doc.numPages} pages`;
-    const allText: string = PdfData.pages.map(page => page.text).join("\n\n");
+    pdfData.documentInfo = `Processed ${doc.numPages} pages`;
+    pdfData.text = pdfData.pages.map(page => page.text).join("\n\n");
+    pdfData.items = allItems;
 
-    return allText;
+    return pdfData;
   } catch (err) {
     console.error("Error while processing PDF:", err);
     throw err;
@@ -76,6 +92,9 @@ export default function Popup() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('first');
   const [piiResults, setPiiResults] = useState<PII[]>([]);
   const [originalText, setOriginalText] = useState<string>('');
+  const [pdfData, setPdfData] = useState<PdfData | null>(null);
+  const [highlightedPdf, setHighlightedPdf] = useState<Uint8Array | null>(null);
+  const [fileName, setFileName] = useState<string | undefined>(undefined);
 
   const handleSubmit = async (data: { text?: string; file?: File }) => {
 
@@ -91,7 +110,7 @@ export default function Popup() {
         }
         chrome.runtime.sendMessage(message)
           .then(async (response: Array<any>) => {
-            results = await post_process_PII(response);
+            results = await post_process_PII(response, data.text);
             setPiiResults(results);
             setCurrentScreen('second');
           })
@@ -103,16 +122,25 @@ export default function Popup() {
       }
 
       else if (data.file) {
+        setFileName(data.file.name);
         if (data.file.type == "application/pdf") {
           const pdfData = await processPdf(data.file);
+          setPdfData(pdfData);
           const message = {
             action: "text",
-            text: pdfData
+            text: pdfData.text
           }
+          console.log("Sending message to background script");
           chrome.runtime.sendMessage(message)
             .then(async (response: Array<any>) => {
-              results = await post_process_PII(response);
+              console.log("Received response from background script");
+              results = await post_process_PII(response, pdfData.text);
               setPiiResults(results);
+              if (data.file) {
+                const highlighted = await highlightPIIInPdf(data.file, results, pdfData);
+                setHighlightedPdf(highlighted);
+              }
+              console.log("Setting screen to second");
               setCurrentScreen('second');
             })
             .catch((err) => {
@@ -146,6 +174,9 @@ export default function Popup() {
     setCurrentScreen('first');
     setPiiResults([]);
     setOriginalText('');
+    setPdfData(null);
+    setHighlightedPdf(null);
+    setFileName(undefined);
   };
 
   if (currentScreen === 'loading') {
@@ -176,6 +207,8 @@ export default function Popup() {
             piiItems={piiResults}
             onBack={handleBack}
             originalText={originalText}
+            highlightedPdf={highlightedPdf}
+            fileName={fileName}
           />
         </div>
       )}
