@@ -8,7 +8,6 @@
 - [Features](#features)
 - [GettingStarted](#gettingStarted)
 - [License](#license)
-- [Contributing](#contributing)
 
 ## Features <a name="features"></a>
 - [PII Model](https://huggingface.co/onnx-community/piiranha-v1-detect-personal-information-ONNX)
@@ -39,8 +38,5 @@ To create an optimized production build, run `yarn build[:chrome|:firefox]`, or
 ## License
 - Original code: CC BY-NC 4.0  
 - Includes Apple AMLR model (Research-only, non-commercial)  
-- Includes [Model Name] licensed under CC BY-NC-ND 4.0  
+- Includes license under CC BY-NC-ND 4.0  
 - Therefore, this project as a whole is **non-commercial use only**.
-
-# Contributing <a name="contributing"></a>
-Feel free to open PRs or raise issues!
