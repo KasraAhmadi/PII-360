@@ -38,8 +38,7 @@ class PIIDetector {
     return (this.pipelineFn ??= async (...args) => {
       this.pipelineInstance ??= pipeline(
         'token-classification',
-        "iiiorg/piiranha-v1-detect-personal-information",
-        //'onnx-community/piiranha-v1-detect-personal-information-ONNX',
+        'onnx-community/piiranha-v1-detect-personal-information-ONNX',
         {
           progress_callback,
           device: device,
@@ -57,12 +56,11 @@ class PIIDetector {
     // Load tokenizer lazily
     if (!this.tokenizer) {
       this.tokenizer = await AutoTokenizer.from_pretrained(
-       "iiiorg/piiranha-v1-detect-personal-information" 
-      //'onnx-community/piiranha-v1-detect-personal-information-ONNX'
+      'onnx-community/piiranha-v1-detect-personal-information-ONNX'
       );
     }
 
-    const maxLength = 256;
+    const maxLength = 128;
 
     // Tokenize input text
     const encoding = await this.tokenizer(message.text, { add_special_tokens: true });
@@ -88,7 +86,7 @@ class PIIDetector {
     let results = [];
     for (const chunk of textChunks) {
       const output = await classifier(chunk);
-      console.log("classifier output:", JSON.stringify(output, null, 2));
+      // console.log("classifier output:", JSON.stringify(output, null, 2));
       results = results.concat(output);
     }
 
@@ -107,7 +105,7 @@ class VLM {
         "onnx-community/FastVLM-0.5B-ONNX",
         {
           dtype: {
-            embed_tokens: "q4",
+            embed_tokens: "fp16",
             vision_encoder: "q4",
             decoder_model_merged: "q4",
           },
@@ -134,7 +132,7 @@ class VLM {
     const messages = [
       {
         role: "user",
-        content: "<image>Describe this image in detail. Include all PII you find in response.",
+        content: "<image>You are a helpful visual AI assistant. Include all PII you find in response. Include cities, location, BOD, Names, and numbers.",
       },
     ];
 
@@ -183,7 +181,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   else if (message.action == "image") {
     (async function () {
       const vlm_output = await VLM.infer(message.text);
-      console.log("VLM Output:", vlm_output);
+      // console.log("VLM Output:", vlm_output);
       const result = await PIIDetector.classifyText({ text: vlm_output[0]});
       sendResponse(result);
     })();
