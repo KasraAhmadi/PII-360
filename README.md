@@ -1,13 +1,13 @@
 <div align="center">
 <img src="public/icon-128.png" alt="logo"/>
-<h1>Personally Identifiable Information (PII) on text, image, and pdf with text masking on pdf.</h1>
-<h5>This opensource project is for research and educational perpose. No commercial usage is allowed due to models licening.</h5>
+<h1>Personally Identifiable Information (PII) on text, image, and pdf with pii masking on pdf.</h1>
 </div>
 
 ## Table of Contents
 
 - [Features](#features)
 - [GettingStarted](#gettingStarted)
+- [License](#license)
 - [Contributing](#contributing)
 
 ## Features <a name="features"></a>
@@ -35,6 +35,12 @@ source files. Changing the source files will refresh the corresponding
 
 To create an optimized production build, run `yarn build[:chrome|:firefox]`, or
 `npm run build[:chrome|:firefox]`.
+
+## License
+- Original code: CC BY-NC 4.0  
+- Includes Apple AMLR model (Research-only, non-commercial)  
+- Includes [Model Name] licensed under CC BY-NC-ND 4.0  
+- Therefore, this project as a whole is **non-commercial use only**.
 
 # Contributing <a name="contributing"></a>
 Feel free to open PRs or raise issues!
