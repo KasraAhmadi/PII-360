@@ -7,7 +7,7 @@
 ## Table of Contents
 
 - [Features](#features)
-- [GettingStarted] (#gettingStarted)
+- [GettingStarted](#gettingStarted)
 - [Contributing](#contributing)
 
 ## Features <a name="features"></a>
@@ -16,11 +16,6 @@
 - [React 19](https://reactjs.org/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [Tailwind CSS 4](https://tailwindcss.com/)
-- [i18n (optional)](https://developer.chrome.com/docs/extensions/reference/api/i18n)
-- [Cross browser development with polyfill (optional)](https://github.com/mozilla/webextension-polyfill?tab=readme-ov-file#basic-setup-with-module-bundlers)
-- [ESLint](https://eslint.org/)
-- [Chrome Extension Manifest Version 3](https://developer.chrome.com/docs/extensions/mv3/intro/)
-- [Github Action](https://github.com/JohnBra/vite-web-extension/actions/workflows/ci.yml) to build and zip your extension (manual trigger)
 
 ### Getting Started <a name="gettingStarted"></a>
 
