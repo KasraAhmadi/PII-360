@@ -1,21 +1,36 @@
-The MIT License (MIT)
+This repository contains code and models under different licenses.
 
-Copyright (c) 2022 Jonathan Braat
+1. Original Code License
+------------------------
+All original code in this repository (except where otherwise noted) is licensed under the
+Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0) License.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+You may share and adapt the code for non-commercial purposes, with proper attribution.
+See: https://creativecommons.org/licenses/by-nc/4.0/
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. Apple AMLR Model
+-------------------
+This repository includes or makes use of an Apple Machine Learning Research (AMLR) model.
+The AMLR model is licensed under the Apple Machine Learning Research License Agreement
+and is for non-commercial research purposes only.
+
+See: https://huggingface.co/apple/DFN-public/blob/main/LICENSE
+
+
+3. CC BY-NC-ND 4.0 Licensed Model
+---------------------------------
+This repository includes or makes use of a model licensed under the
+Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License (CC BY-NC-ND 4.0).
+
+Attribution: [Insert author/project name here]  
+The model is used as-is (no derivatives).  
+See: https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+
+4. Combined Restriction
+-----------------------
+Because of the above third-party licenses, this repository and its contents are
+for non-commercial use only. Commercial use, redistribution for profit,
+or inclusion in paid services is prohibited.
+

@@ -1,54 +1,94 @@
-// Mock PII detection utility
-// In a real application, this would connect to a backend service or ML model
-// import { pipeline } from '@huggingface/transformers';
-// // import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
-// const classifier = await pipeline('token-classification', 'onnx-community/llama-ai4privacy-multilingual-categorical-anonymiser-openpii-ONNX');
-
-
 export interface PII {
   id: string;
   word: string;
   category: string;
+  start: number;
+  end: number;
 }
 
-export function post_process_PII(input_array: Array<any>): PII[] {
+export function post_process_PII(input_array: Array<any>, originalText?: string): PII[] {
   console.log(input_array);
   let idCounter = 1;
-  let expected_index = 0;
   let response: Array<PII> = [];
-  let pr_token: string;
-  let word = ""
-  let pii_object: PII;
+  let current_word = "";
+  let current_category = "";
+  let current_start = -1;
+
+  let characterPosition = 0;
+  const tokenPositions: Array<{start: number, end: number}> = [];
+  
+  if (originalText) {
+    for (const token of input_array) {
+      const word = token.word;
+      const startPos = originalText.indexOf(word, characterPosition);
+      if (startPos !== -1) {
+        tokenPositions.push({
+          start: startPos,
+          end: startPos + word.length
+        });
+        characterPosition = startPos + word.length;
+      } else {
+        tokenPositions.push({
+          start: characterPosition,
+          end: characterPosition + word.length
+        });
+        characterPosition += word.length;
+      }
+    }
+  } else {
+    for (const token of input_array) {
+      const word = token.word;
+      tokenPositions.push({
+        start: characterPosition,
+        end: characterPosition + word.length
+      });
+      characterPosition += word.length;
+    }
+  }
+
   input_array.forEach((object, index) => {
     const token_category = object["entity"].split("-")[1];
-    if (index >= 1) {
-      pr_token = input_array[index - 1]["entity"].split("-")[1];
-    }
-    const token_index = object["index"];
-    if (expected_index == 0 || expected_index == token_index) {
-      word += object["word"]
-    } else {
-      pii_object = {
+    const word = object["word"];
+    const start = tokenPositions[index]?.start ?? 0;
+    const end = tokenPositions[index]?.end ?? word.length;
+
+    const previousEnd = index > 0 ? tokenPositions[index - 1]?.end ?? 0 : 0;
+    const isConsecutive = Math.abs(start - previousEnd) <= 5; 
+
+    if ((current_category !== token_category || !isConsecutive) && current_word !== "") {
+      response.push({
         id: `pii-${idCounter++}`,
-        word: word,
-        category: pr_token
-      };
-      response.push(pii_object);
-      word = "";
-      word += object["word"]
+        word: current_word.trim(),
+        category: current_category,
+        start: current_start,
+        end: tokenPositions[index - 1]?.end ?? current_start + current_word.length,
+      });
+      current_word = "";
+      current_category = "";
+      current_start = -1;
     }
-    expected_index = token_index + 1
-    if (index === input_array.length - 1) {
-      pii_object = {
+
+    if (current_word === "") {
+      current_start = start;
+      current_category = token_category;
+    }
+
+    current_word += word;
+
+    if (index === input_array.length - 1 && current_word !== "") {
+      response.push({
         id: `pii-${idCounter++}`,
-        word: word,
-        category: token_category
-      };
-      response.push(pii_object);
+        word: current_word.trim(),
+        category: token_category,
+        start: current_start,
+        end: end,
+      });
     }
   });
+
   return response;
 }
+
 
 
 

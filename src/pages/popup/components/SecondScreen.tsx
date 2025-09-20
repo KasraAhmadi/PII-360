@@ -17,6 +17,8 @@ interface SecondScreenProps {
   piiItems: PIIItem[];
   onBack: () => void;
   originalText?: string;
+  highlightedPdf?: Uint8Array | null;
+  fileName?: string;
 }
 
 const getPIITypeColor = (type: string) => {
@@ -32,8 +34,22 @@ const getPIITypeColor = (type: string) => {
   return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
 };
 
-export function SecondScreen({ piiItems, onBack }: SecondScreenProps) {
+export function SecondScreen({ piiItems, onBack, highlightedPdf, fileName }: SecondScreenProps) {
+  console.log("SecondScreen component rendered");
   const [showSensitiveData, setShowSensitiveData] = useState(false);
+
+  const handleDownload = () => {
+    if (!highlightedPdf) return;
+    const blob = new Blob([highlightedPdf], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `highlighted-${fileName || 'pii_results.pdf'}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const maskText = (text: string, type: string) => {
     if (showSensitiveData) return text;
@@ -150,13 +166,11 @@ export function SecondScreen({ piiItems, onBack }: SecondScreenProps) {
           Analyze Another
         </Button>
         <Button 
-          onClick={() => {
-            // Export functionality could be added here
-            console.log('Export results:', piiItems);
-          }}
+          onClick={handleDownload}
+          disabled={!highlightedPdf}
           className="flex-1"
         >
-          Export Results
+          Download Highlighted PDF
         </Button>
       </div>
     </div>
