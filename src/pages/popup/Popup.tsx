@@ -15,10 +15,6 @@ function shouldUseWebGLFp16() {
     
     if (!gl) return false;
     
-    // Check basic FP16 extension support
-    const hasColorBufferHalfFloat = gl.getExtension('EXT_color_buffer_half_float');
-    if (!hasColorBufferHalfFloat) return false;
-    
     // Get platform info
     const platform = navigator.platform.toLowerCase();
     const userAgent = navigator.userAgent.toLowerCase();
@@ -29,39 +25,23 @@ function shouldUseWebGLFp16() {
       gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase() : '';
     const vendor = debugInfo ? 
       gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL).toLowerCase() : '';
-    
     // Platform detection
     const isMac = platform.includes('mac') || userAgent.includes('mac os');
     const isLinux = platform.includes('linux') || userAgent.includes('linux');
-    const isWindows = platform.includes('win') || userAgent.includes('windows');
-    
+    const isWindows = platform.includes('win') || userAgent.includes('windows');    
     // GPU vendor detection
-    const isAppleGPU = renderer.includes('apple') || vendor.includes('apple');
-    const isNVIDIA = renderer.includes('nvidia') || vendor.includes('nvidia');
+    const isNVIDIA = renderer.includes('nvidia') || vendor.includes('nvidia') ;
+
     const isAMD = renderer.includes('amd') || renderer.includes('radeon');
-    const isIntel = renderer.includes('intel');
-    
+
     // Mac with Apple Silicon or dedicated GPU - usually good FP16 performance
-    if (isMac && (isAppleGPU || isNVIDIA || isAMD)) {
+    if (isMac) {
       return true;
     }
     
     // Windows with dedicated GPU - usually good
     if (isWindows && (isNVIDIA || isAMD)) {
       return true;
-    }
-    
-    // Linux - more conservative, depends on GPU
-    if (isLinux) {
-      // Only recommend FP16 on Linux for high-end GPUs
-      if (isNVIDIA && (renderer.includes('rtx') || renderer.includes('gtx'))) {
-        return true;
-      }
-      if (isAMD && renderer.includes('rx')) {
-        return true;
-      }
-      // Linux with Intel or other GPUs - usually poor FP16 performance
-      return false;
     }
     
     // Conservative fallback - if we can't determine platform/GPU, use FP32
@@ -164,11 +144,8 @@ export default function Popup() {
   useEffect(() => {
     const backend = localStorage.getItem("bestBackend");
     if (backend) {
-      console.log("Previously selected backend:", backend);
       if (backend === "wasm") {
-        console.log("wasm");
-      } else if (backend === "webgpu") {
-        console.log("webgpu");
+        setImageSupported(false);
       }
     } else {
       console.log("No cached backend found, running benchmark...");
