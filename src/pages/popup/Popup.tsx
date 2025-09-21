@@ -210,9 +210,9 @@ export default function Popup() {
             .then(async (response: Array<any>) => {
               console.log("Received response from background script");
               const modelPiiResults = await post_process_PII(response, pdfData.text);
-              const regexPiiResults = detectPiiWithRegex(pdfData.text);
-              results = [...modelPiiResults, ...regexPiiResults];
-              setPiiResults(results);
+              // const regexPiiResults = detectPiiWithRegex(pdfData.text);
+              // results = [...modelPiiResults, ...regexPiiResults];
+              setPiiResults(modelPiiResults);
               if (data.file) {
                 const highlighted = await highlightPIIInPdf(data.file, results, pdfData);
                 setHighlightedPdf(highlighted);
