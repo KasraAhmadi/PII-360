@@ -8,6 +8,35 @@ import { getDocument, PDFDocumentProxy, PDFPageProxy, GlobalWorkerOptions } from
 import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
 import { highlightPIIInPdf } from './utils/pdfUtils';
 
+function supportsWebGLFp16() {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    if (!gl) {
+      console.error("WebGL is not supported on this browser/device.");
+    } else {
+      const extensions = gl.getSupportedExtensions();
+      console.log("Supported WebGL extensions:", extensions);
+    }
+    if (!gl) return false;
+
+    // Check for half-float texture support
+    const halfFloatExt = gl.getExtension('OES_texture_half_float');
+    console.log(halfFloatExt)
+    if (!halfFloatExt) return false;
+    console.log("halfFloatExt")
+
+    // For WebGL1, also need linear filtering
+    if (!(gl instanceof WebGL2RenderingContext)) {
+      if (!gl.getExtension('OES_texture_half_float_linear')) return false;
+    }
+
+    return true;
+  } catch (e) {
+    console.log(e)
+    return false;
+  }
+}
 // Configure worker
 GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -109,16 +138,22 @@ export default function Popup() {
       }
     } else {
       console.log("No cached backend found, running benchmark...");
-      chrome.runtime.sendMessage(
-        { action: "pageLoaded" },
-        (response) => {
-          console.log("Background responded to page load:", response);
-          localStorage.setItem("bestBackend", response);
-          if (response === "wasm") {
-            setImageSupported(false);
+      if (supportsWebGLFp16()) {
+        chrome.runtime.sendMessage(
+          { action: "pageLoaded" },
+          (response) => {
+            console.log("Background responded to page load:", response);
+            localStorage.setItem("bestBackend", response);
+            if (response === "wasm") {
+              setImageSupported(false);
+            }
           }
-        }
-      );
+        );
+      } else {
+        localStorage.setItem("bestBackend", "wasm");
+        setImageSupported(false);
+      }
+
     }
 
   }, []);

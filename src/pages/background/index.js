@@ -1,26 +1,4 @@
 
-function supportsWebGLFp16() {
-  try {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-    
-    if (!gl) return false;
-    
-    // Check for half-float texture support
-    const halfFloatExt = gl.getExtension('OES_texture_half_float');
-    if (!halfFloatExt) return false;
-    
-    // For WebGL1, also need linear filtering
-    if (!(gl instanceof WebGL2RenderingContext)) {
-      if (!gl.getExtension('OES_texture_half_float_linear')) return false;
-    }
-    
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
 async function benchmarkBackend() {
 
   try {
@@ -62,9 +40,6 @@ async function benchmarkWebGPU() {
   const adapter = await navigator.gpu.requestAdapter();
   if (!adapter) return Infinity;
 
-  if(supportsWebGLFp16() == false){
-    return Infinity;
-  }
   const device = await adapter.requestDevice();
 
   const size = 1e7; // 1M elements for demo
