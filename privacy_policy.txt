@@ -1,0 +1,34 @@
+Privacy Policy
+
+Effective Date: Sep 21, 2025
+
+Overview
+
+This Chrome extension PII 360 is designed to detect sensitive information (PII) in documents locally on the user’s device. We value your privacy and are committed to protecting it.
+
+Data Collection and Use
+
+The Extension does not collect, store, or transmit any personal data from users.
+
+All processing, including machine learning model inference, takes place locally on your device.
+
+No user content (text, PDFs, or other files) is ever sent to external servers.
+
+Data Sharing
+
+Since no user data is collected, no data is shared with third parties.
+
+Permissions
+
+The Extension requests the following permissions solely to provide its functionality:
+
+storage & unlimitedStorage: Used to cache machine learning models locally (~2 GB) to improve performance and enable offline use.
+
+Changes to this Policy
+
+If this Privacy Policy changes, the updated version will be posted in the Chrome Web Store listing.
+
+Contact
+
+If you have any questions or concerns about this Privacy Policy, please contact us at:
+kasra.research@gmail.com
