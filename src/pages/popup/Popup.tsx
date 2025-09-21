@@ -179,9 +179,9 @@ export default function Popup() {
     setFileName(undefined);
   };
 
-  if (currentScreen === 'loading') {
+    if (currentScreen === 'loading') {
     return (
-      <div className="size-full flex items-center justify-center">
+      <div className="size-full flex flex-col items-center justify-center">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
           <div>
@@ -194,24 +194,60 @@ export default function Popup() {
   }
 
   return (
-    <div className="size-full bg-background">
-      {currentScreen === 'first' && (
-        <div className="size-full flex items-center justify-center">
-          <FirstScreen onSubmit={handleSubmit} />
-        </div>
-      )}
+    <div className="size-full bg-background flex flex-col">
+      <div className="flex-grow">
+        {currentScreen === 'first' && (
+          <div className="size-full flex items-center justify-center">
+            <FirstScreen onSubmit={handleSubmit} />
+          </div>
+        )}
 
-      {currentScreen === 'second' && (
-        <div className="size-full flex items-center justify-center">
-          <SecondScreen
-            piiItems={piiResults}
-            onBack={handleBack}
-            originalText={originalText}
-            highlightedPdf={highlightedPdf}
-            fileName={fileName}
-          />
-        </div>
-      )}
+        {currentScreen === 'second' && (
+          <div className="size-full flex items-center justify-center">
+            <SecondScreen
+              piiItems={piiResults}
+              onBack={handleBack}
+              originalText={originalText}
+              highlightedPdf={highlightedPdf}
+              fileName={fileName}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Footer Section */}
+       <footer className="w-full border-t border-gray-200 p-1 text-[8px] text-center text-gray-500">
+        <p>
+          Built by{" "}
+          <a
+            href="https://www.linkedin.com/in/kasra-ahmadii/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            Kasra Ahmadi
+          </a>{" "}
+          &{" "}
+          <a
+            href="https://www.linkedin.com/in/georgi-varbanov-22505a369/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            Georgi Varbanov
+          </a>
+        </p>
+        <p>
+          <a
+            href="https://github.com/KasraAhmadi/PII-360"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            View Project on GitHub
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }

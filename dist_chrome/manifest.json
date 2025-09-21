@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PII 360",
-  "description": "ML based PII detection for text, Pdf, and imagessssss",
+  "description": "An open-source Chrome Extension that identifies and mask PII in images and PDFs using ONNX-based ML models.",
   "background": {
     "service_worker": "service-worker-loader.js",
     "type": "module"
