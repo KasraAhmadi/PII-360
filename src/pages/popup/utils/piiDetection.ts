@@ -141,13 +141,13 @@ export function detectPiiWithRegexOptimized(text: string): PII[] {
         IP_ADDRESS: `(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`,
         PHONE_NUMBER: `(?:\\+?1\\s*[-.\\s]?)?\\(?([2-9][0-8][0-9])\\)?[-.\\s]?([2-9][0-9]{2})[-.\\s]?([0-9]{4})`,
         US_PASSPORT_NUMBER: `[0-9]{9}`,
-        US_STREET_ADDRESS: `\\d{1,5}\\s(?:[A-Z][a-z0-9]+\\s?)+(?:Street|St|Road|Rd|Avenue|Ave|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct)`,
-        FULL_NAME: `([A-Z][a-z'-]{1,30})\\s(?:([A-Z])\\.\\s)?([A-Z][a-z'-]{1,30})`,
+        US_STREET_ADDRESS: `\\d{1,5}\\s(?:[A-Z][a-z0-9]+\\s?)+(?:Street|St|Road|Rd|Avenue|Ave|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct)`
+        // FULL_NAME: `([A-Z][a-z'-]{1,30})\\s(?:([A-Z])\\.\\s)?([A-Z][a-z'-]{1,30})`,
     };
 
     // Combine all patterns into a single regex
     const combinedPattern = Object.entries(patterns)
-        .map(([name, pattern]) => `(?<${name}>\\b(?:${pattern})\\b)`)
+        .map(([name, pattern]) => `(?<${name}>3\\b(?:${pattern})\\b)`)
         .join('|');
     
     const combinedRegex = new RegExp(combinedPattern, 'g');
@@ -164,7 +164,6 @@ export function detectPiiWithRegexOptimized(text: string): PII[] {
                         category: key,
                         start: match.index,
                         end: match.index + groups[key].length,
-                        confidence: confidenceMap[key],
                     });
                     // Once we find the match, we break the inner loop to avoid adding duplicates from the same match
                     break; 

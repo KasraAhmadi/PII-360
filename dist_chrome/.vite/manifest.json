@@ -1,6 +1,6 @@
 {
   "../../../../../@crx/manifest": {
-    "file": "assets/crx-manifest.js-Dz2u0Mkx.js",
+    "file": "assets/crx-manifest.js-B1vPEp4s.js",
     "name": "crx-manifest.js",
     "src": "../../../../../@crx/manifest",
     "isEntry": true
@@ -14,7 +14,7 @@
     "src": "node_modules/pdfjs-dist/build/pdf.worker.mjs"
   },
   "src/pages/background/index.js": {
-    "file": "assets/index.js-DIkT5P5k.js",
+    "file": "assets/index.js-BJxh45KO.js",
     "name": "index.js",
     "src": "src/pages/background/index.js",
     "isEntry": true,
@@ -23,12 +23,12 @@
     ]
   },
   "src/pages/popup/index.html": {
-    "file": "assets/index.html-A9pdcSKH.js",
+    "file": "assets/index.html-BwDgrXiL.js",
     "name": "index.html",
     "src": "src/pages/popup/index.html",
     "isEntry": true,
     "css": [
-      "assets/index-BwuVWv6m.css"
+      "assets/index-DXHS4MkO.css"
     ],
     "assets": [
       "assets/pdf.worker-BQQyum15.mjs"

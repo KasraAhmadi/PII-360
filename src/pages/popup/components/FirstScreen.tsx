@@ -6,9 +6,10 @@ import { Upload, FileText } from 'lucide-react';
 
 interface FirstScreenProps {
   onSubmit: (data: { text?: string; file?: File }) => void;
+  imageSupported: boolean; // <-- NEW
 }
 
-export function FirstScreen({ onSubmit }: FirstScreenProps) {
+export function FirstScreen({ onSubmit,imageSupported }: FirstScreenProps) {
   const [text, setText] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -68,7 +69,7 @@ export function FirstScreen({ onSubmit }: FirstScreenProps) {
             <input
               id="file-upload"
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept={imageSupported ? ".pdf,image/jpeg" : ".pdf"} // <-- only allow PDF if wasm
               onChange={handleFileChange}
               className="hidden"
             />

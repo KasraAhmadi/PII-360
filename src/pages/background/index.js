@@ -1,3 +1,54 @@
+async function benchmarkBackend() {
+
+  try {
+    const wasmTime = await benchmarkWasm();
+
+    // Micro-benchmark for WebGPU (if available)
+    const gpuTime = (navigator.gpu) ? await benchmarkWebGPU() : Infinity;
+    const best = wasmTime < gpuTime ? "wasm" : "webgpu";
+
+    // Cache result
+    return best;
+  } catch (err) {
+    console.error("Benchmarking failed, defaulting to wasm:", err);
+    return "wasm";
+  }
+}
+
+async function benchmarkWasm() {
+  const start = performance.now();
+  // Example: heavy math loop
+  let x = 0;
+  for (let i = 0; i < 1e7; i++) {
+    x += Math.sqrt(i);
+  }
+  return performance.now() - start;
+}
+
+async function benchmarkWebGPU() {
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) return Infinity;
+  const device = await adapter.requestDevice();
+
+  const start = performance.now();
+
+  // Fake workload: just submit a no-op command buffer N times
+  for (let i = 0; i < 1000; i++) {
+    const encoder = device.createCommandEncoder();
+    const pass = encoder.beginComputePass();
+    pass.end();
+    device.queue.submit([encoder.finish()]);
+  }
+
+  await device.queue.onSubmittedWorkDone();
+  return performance.now() - start;
+}
+// console.log("Hoorayyy")
+// if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+
+// }
+
+
 
 function hasWebGPU() {
   return typeof navigator !== "undefined" && "gpu" in navigator;
@@ -23,7 +74,7 @@ import {
   TextStreamer, env, pipeline, AutoTokenizer
 } from "@huggingface/transformers";
 
-env.allowLocalModels = true;
+env.allowLocalModels = false;
 
 
 class PIIDetector {
@@ -32,9 +83,8 @@ class PIIDetector {
   static pipelineFn = null;
   static promiseChain = null;
 
-  static async getInstance(progress_callback) {
-  const device = hasWebGPU() ? "webgpu" : "wasm";
-  console.log(`Loading pipeline on device: ${device}`);
+  static async getInstance(device, progress_callback) {
+    console.log(`Loading pipeline on device: ${device}`);
     return (this.pipelineFn ??= async (...args) => {
       this.pipelineInstance ??= pipeline(
         'token-classification',
@@ -53,10 +103,11 @@ class PIIDetector {
   }
 
   static async classifyText(message, progress_callback) {
+
     // Load tokenizer lazily
     if (!this.tokenizer) {
       this.tokenizer = await AutoTokenizer.from_pretrained(
-      'onnx-community/piiranha-v1-detect-personal-information-ONNX'
+        'onnx-community/piiranha-v1-detect-personal-information-ONNX'
       );
     }
 
@@ -80,7 +131,7 @@ class PIIDetector {
       )
     );
 
-    const classifier = await this.getInstance(progress_callback);
+    const classifier = await this.getInstance(message.backend, progress_callback);
     console.log("PII model is loaded")
 
     let results = [];
@@ -99,7 +150,7 @@ class VLM {
   static processor = null;
 
   // Lazy-load singleton model
-  static async getInstance(progress_callback) {
+  static async getInstance(device, progress_callback) {
     if (!this.instance) {
       this.instance = await AutoModelForImageTextToText.from_pretrained(
         "onnx-community/FastVLM-0.5B-ONNX",
@@ -110,7 +161,7 @@ class VLM {
             decoder_model_merged: "q4",
           },
           progress_callback,
-          device: "webgpu",
+          device: device,
         }
       );
     }
@@ -118,7 +169,7 @@ class VLM {
   }
 
   // Inference function (refactored from VLM_inference)
-  static async infer(file, progress_callback) {
+  static async infer(file, device, progress_callback) {
     // Load processor lazily
     if (!this.processor) {
       this.processor = await AutoProcessor.from_pretrained(
@@ -126,7 +177,7 @@ class VLM {
       );
     }
 
-    const vlmModel = await this.getInstance(progress_callback);
+    const vlmModel = await this.getInstance(device, progress_callback);
     console.log("VLM model is loaded")
 
     const messages = [
@@ -170,19 +221,30 @@ class VLM {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+
+  if (message.action == "pageLoaded") {
+    (async function () {
+      benchmarkBackend().then(result => {
+        sendResponse(result);
+      });
+    })();
+
+
+  }
+
   if (message.action == "text") {
     (async function () {
       // Perform classification
-      const result = await PIIDetector.classifyText({ text: message.text });
+      const result = await PIIDetector.classifyText({ text: message.text, backend: message.backend });
       // Send response back to UI
       sendResponse(result);
     })();
   }
   else if (message.action == "image") {
     (async function () {
-      const vlm_output = await VLM.infer(message.text);
+      const vlm_output = await VLM.infer(message.text, message.backend);
       // console.log("VLM Output:", vlm_output);
-      const result = await PIIDetector.classifyText({ text: vlm_output[0]});
+      const result = await PIIDetector.classifyText({ text: vlm_output[0], backend: message.backend });
       sendResponse(result);
     })();
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FirstScreen } from './components/FirstScreen';
 import { SecondScreen } from './components/SecondScreen';
 import { post_process_PII, detectPiiWithRegexOptimized as detectPiiWithRegex } from './utils/piiDetection';
@@ -66,7 +66,7 @@ export async function processPdf(file: File): Promise<PdfData> {
         processedAt: new Date().toISOString(),
         items: content.items,
       });
-      
+
       // Add page index to each item for highlighting
       const itemsWithPageIndex = content.items.map((item: any) => ({
         ...item,
@@ -95,6 +95,33 @@ export default function Popup() {
   const [pdfData, setPdfData] = useState<PdfData | null>(null);
   const [highlightedPdf, setHighlightedPdf] = useState<Uint8Array | null>(null);
   const [fileName, setFileName] = useState<string | undefined>(undefined);
+  const [imageSupported, setImageSupported] = useState<boolean>(true); // <-- NEW
+
+
+  useEffect(() => {
+    const backend = localStorage.getItem("bestBackend");
+    if (backend) {
+      console.log("Previously selected backend:", backend);
+      if (backend === "wasm") {
+        console.log("wasm");
+      } else if (backend === "webgpu") {
+        console.log("webgpu");
+      }
+    } else {
+      console.log("No cached backend found, running benchmark...");
+      chrome.runtime.sendMessage(
+        { action: "pageLoaded" },
+        (response) => {
+          console.log("Background responded to page load:", response);
+          localStorage.setItem("bestBackend", response);
+          if (response === "wasm") {
+            setImageSupported(false);
+          }
+        }
+      );
+    }
+
+  }, []);
 
   const handleSubmit = async (data: { text?: string; file?: File }) => {
 
@@ -106,7 +133,8 @@ export default function Popup() {
       if (data.text) {
         const message = {
           action: "text",
-          text: data.text
+          text: data.text,
+          backend: localStorage.getItem("bestBackend")
         }
         chrome.runtime.sendMessage(message)
           .then(async (response: Array<any>) => {
@@ -128,7 +156,8 @@ export default function Popup() {
           setPdfData(pdfData);
           const message = {
             action: "text",
-            text: pdfData.text
+            text: pdfData.text,
+            backend: localStorage.getItem("bestBackend")
           }
           console.log("Sending message to background script");
           chrome.runtime.sendMessage(message)
@@ -148,7 +177,7 @@ export default function Popup() {
             .catch((err) => {
               console.error('Error sending message:', err);
             });
-        } else if(data.file.type == "image/jpeg"){
+        } else if (data.file.type == "image/jpeg") {
           const base64 = await fileToBase64(data.file);
 
           const message = {
@@ -181,7 +210,7 @@ export default function Popup() {
     setFileName(undefined);
   };
 
-    if (currentScreen === 'loading') {
+  if (currentScreen === 'loading') {
     return (
       <div className="size-full flex flex-col items-center justify-center">
         <div className="text-center space-y-4">
@@ -199,8 +228,13 @@ export default function Popup() {
     <div className="size-full bg-background flex flex-col">
       <div className="flex-grow">
         {currentScreen === 'first' && (
-          <div className="size-full flex items-center justify-center">
-            <FirstScreen onSubmit={handleSubmit} />
+          <div className="size-full flex flex-col items-center justify-center space-y-2">
+            {!imageSupported && (
+              <p className="text-red-600 text-sm font-medium">
+                WebGPU is not efficient on your device. Image PII detection is not supported.
+              </p>
+            )}
+            <FirstScreen onSubmit={handleSubmit} imageSupported={imageSupported} />
           </div>
         )}
 
@@ -218,7 +252,7 @@ export default function Popup() {
       </div>
 
       {/* Footer Section */}
-       <footer className="w-full border-t border-gray-200 p-1 text-[8px] text-center text-gray-500">
+      <footer className="w-full border-t border-gray-200 p-1 text-[8px] text-center text-gray-500">
         <p>
           Built by{" "}
           <a
