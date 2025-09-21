@@ -8,32 +8,66 @@ import { getDocument, PDFDocumentProxy, PDFPageProxy, GlobalWorkerOptions } from
 import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
 import { highlightPIIInPdf } from './utils/pdfUtils';
 
-function supportsWebGLFp16() {
+function shouldUseWebGLFp16() {
   try {
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-    if (!gl) {
-      console.error("WebGL is not supported on this browser/device.");
-    } else {
-      const extensions = gl.getSupportedExtensions();
-      console.log("Supported WebGL extensions:", extensions);
-    }
+    
     if (!gl) return false;
-
-    // Check for half-float texture support
-    const halfFloatExt = gl.getExtension('OES_texture_half_float');
-    console.log(halfFloatExt)
-    if (!halfFloatExt) return false;
-    console.log("halfFloatExt")
-
-    // For WebGL1, also need linear filtering
-    if (!(gl instanceof WebGL2RenderingContext)) {
-      if (!gl.getExtension('OES_texture_half_float_linear')) return false;
+    
+    // Check basic FP16 extension support
+    const hasColorBufferHalfFloat = gl.getExtension('EXT_color_buffer_half_float');
+    if (!hasColorBufferHalfFloat) return false;
+    
+    // Get platform info
+    const platform = navigator.platform.toLowerCase();
+    const userAgent = navigator.userAgent.toLowerCase();
+    
+    // Get GPU info
+    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+    const renderer = debugInfo ? 
+      gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase() : '';
+    const vendor = debugInfo ? 
+      gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL).toLowerCase() : '';
+    
+    // Platform detection
+    const isMac = platform.includes('mac') || userAgent.includes('mac os');
+    const isLinux = platform.includes('linux') || userAgent.includes('linux');
+    const isWindows = platform.includes('win') || userAgent.includes('windows');
+    
+    // GPU vendor detection
+    const isAppleGPU = renderer.includes('apple') || vendor.includes('apple');
+    const isNVIDIA = renderer.includes('nvidia') || vendor.includes('nvidia');
+    const isAMD = renderer.includes('amd') || renderer.includes('radeon');
+    const isIntel = renderer.includes('intel');
+    
+    // Mac with Apple Silicon or dedicated GPU - usually good FP16 performance
+    if (isMac && (isAppleGPU || isNVIDIA || isAMD)) {
+      return true;
     }
-
-    return true;
+    
+    // Windows with dedicated GPU - usually good
+    if (isWindows && (isNVIDIA || isAMD)) {
+      return true;
+    }
+    
+    // Linux - more conservative, depends on GPU
+    if (isLinux) {
+      // Only recommend FP16 on Linux for high-end GPUs
+      if (isNVIDIA && (renderer.includes('rtx') || renderer.includes('gtx'))) {
+        return true;
+      }
+      if (isAMD && renderer.includes('rx')) {
+        return true;
+      }
+      // Linux with Intel or other GPUs - usually poor FP16 performance
+      return false;
+    }
+    
+    // Conservative fallback - if we can't determine platform/GPU, use FP32
+    return false;
+    
   } catch (e) {
-    console.log(e)
     return false;
   }
 }
@@ -138,7 +172,7 @@ export default function Popup() {
       }
     } else {
       console.log("No cached backend found, running benchmark...");
-      if (supportsWebGLFp16()) {
+      if (shouldUseWebGLFp16()) {
         chrome.runtime.sendMessage(
           { action: "pageLoaded" },
           (response) => {
