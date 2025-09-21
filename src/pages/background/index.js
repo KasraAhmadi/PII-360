@@ -39,8 +39,14 @@ async function benchmarkWebGPU() {
   const adapter = await navigator.gpu.requestAdapter();
   if (!adapter) return Infinity;
   const device = await adapter.requestDevice();
+  const fp16Supported = device.features.has("shader-f16");
+  if (!fp16Supported) {
+    return Infinity;
+  }
 
-  const size = 1024 * 1024; // 1M elements for demo
+
+
+  const size = 1e7; // 1M elements for demo
   const bufferSize = size * 4; // Float32 = 4 bytes
 
   // Create GPU buffers
@@ -70,7 +76,7 @@ async function benchmarkWebGPU() {
   `;
 
   const module = device.createShaderModule({ code: shaderCode });
-  const pipeline = device.createComputePipeline({  layout: "auto",  compute: { module, entryPoint: "main" } });
+  const pipeline = device.createComputePipeline({ layout: "auto", compute: { module, entryPoint: "main" } });
 
   const bindGroup = device.createBindGroup({
     layout: pipeline.getBindGroupLayout(0),
@@ -91,14 +97,14 @@ async function benchmarkWebGPU() {
   pass.end();
   device.queue.submit([encoder.finish()]);
   await device.queue.onSubmittedWorkDone();
-  const duration =  performance.now() - start;
-      // --- Cleanup ---
+  const duration = performance.now() - start;
+  // --- Cleanup ---
   aBuffer.destroy();
   bBuffer.destroy();
   cBuffer.destroy();
   // Nullify references to help GC
   // @ts-ignore
-  aBuffer = null; 
+  aBuffer = null;
   // @ts-ignore
   bBuffer = null;
   // @ts-ignore
@@ -215,7 +221,7 @@ class VLM {
             vision_encoder: "q4",
             decoder_model_merged: "q4",
           },
-          device:device
+          device: device
         }
       );
     }
