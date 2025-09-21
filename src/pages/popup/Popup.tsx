@@ -182,7 +182,9 @@ export default function Popup() {
 
           const message = {
             action: "image",
-            text: base64
+            text: base64,
+            backend: localStorage.getItem("bestBackend")
+
           }
           chrome.runtime.sendMessage(message)
             .then(async (response: Array<any>) => {
@@ -217,7 +219,7 @@ export default function Popup() {
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
           <div>
             <h2 className="text-lg font-semibold">Analyzing for PII...</h2>
-            <p className="text-muted-foreground">This may take a few moments</p>
+            <p className="text-muted-foreground">This may take a longer for first run due to model downloading</p>
           </div>
         </div>
       </div>
