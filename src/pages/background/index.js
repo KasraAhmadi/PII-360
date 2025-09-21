@@ -1,3 +1,26 @@
+
+function supportsWebGLFp16() {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    
+    if (!gl) return false;
+    
+    // Check for half-float texture support
+    const halfFloatExt = gl.getExtension('OES_texture_half_float');
+    if (!halfFloatExt) return false;
+    
+    // For WebGL1, also need linear filtering
+    if (!(gl instanceof WebGL2RenderingContext)) {
+      if (!gl.getExtension('OES_texture_half_float_linear')) return false;
+    }
+    
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 async function benchmarkBackend() {
 
   try {
@@ -38,13 +61,11 @@ async function benchmarkWebGPU() {
   if (!navigator.gpu) return Infinity;
   const adapter = await navigator.gpu.requestAdapter();
   if (!adapter) return Infinity;
-  const device = await adapter.requestDevice();
-  const fp16Supported = device.features.has("shader-f16");
-  if (!fp16Supported) {
+
+  if(supportsWebGLFp16() == false){
     return Infinity;
   }
-
-
+  const device = await adapter.requestDevice();
 
   const size = 1e7; // 1M elements for demo
   const bufferSize = size * 4; // Float32 = 4 bytes
