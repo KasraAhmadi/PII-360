@@ -10,7 +10,6 @@
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'"
   },
   "action": {
-    "default_popup": "src/pages/popup/index.html",
     "default_icon": {
       "32": "icon-32.png"
     }
