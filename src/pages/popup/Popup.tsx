@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FirstScreen } from './components/FirstScreen';
 import { SecondScreen } from './components/SecondScreen';
-import { post_process_PII } from './utils/piiDetection';
+import { post_process_PII, detectPiiWithRegexOptimized as detectPiiWithRegex } from './utils/piiDetection';
 import type { PII } from './utils/piiDetection';
 import { Loader2 } from 'lucide-react';
 import { getDocument, PDFDocumentProxy, PDFPageProxy, GlobalWorkerOptions } from "pdfjs-dist";
@@ -134,7 +134,9 @@ export default function Popup() {
           chrome.runtime.sendMessage(message)
             .then(async (response: Array<any>) => {
               console.log("Received response from background script");
-              results = await post_process_PII(response, pdfData.text);
+              const modelPiiResults = await post_process_PII(response, pdfData.text);
+              const regexPiiResults = detectPiiWithRegex(pdfData.text);
+              results = [...modelPiiResults, ...regexPiiResults];
               setPiiResults(results);
               if (data.file) {
                 const highlighted = await highlightPIIInPdf(data.file, results, pdfData);
