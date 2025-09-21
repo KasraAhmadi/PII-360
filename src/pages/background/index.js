@@ -23,7 +23,7 @@ import {
   TextStreamer, env, pipeline, AutoTokenizer
 } from "@huggingface/transformers";
 
-env.allowLocalModels = false;
+env.allowLocalModels = true;
 
 
 class PIIDetector {

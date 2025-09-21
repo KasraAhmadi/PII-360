@@ -116,3 +116,63 @@ export function post_process_PII(input_array: Array<any>, originalText?: string)
 //   return results;
 
 // }
+
+
+export function detectPiiWithRegexOptimized(text: string): PII[] {
+    const piiResults: PII[] = [];
+    let idCounter = 1;
+
+    // A map to associate each PII category (capture group name) with its confidence level.
+    const confidenceMap: { [key: string]: 'high' | 'medium' | 'low' } = {
+        EMAIL_ADDRESS: 'high',
+        SSN: 'high',
+        CREDIT_CARD_NUMBER: 'high',
+        IP_ADDRESS: 'high',
+        PHONE_NUMBER: 'medium',
+        US_PASSPORT_NUMBER: 'medium',
+        US_STREET_ADDRESS: 'low',
+        FULL_NAME: 'low',
+    };
+    
+    const patterns = {
+        EMAIL_ADDRESS: `[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}`,
+        SSN: `(?!000|666|9\\d{2})([0-8]\\d{2}|7([0-6]\\d|7[012]))[- ]?\\d{2}[- ]?\\d{4}`,
+        CREDIT_CARD_NUMBER: `(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9]{2})[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\\d{3})\\d{11})`,
+        IP_ADDRESS: `(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`,
+        PHONE_NUMBER: `(?:\\+?1\\s*[-.\\s]?)?\\(?([2-9][0-8][0-9])\\)?[-.\\s]?([2-9][0-9]{2})[-.\\s]?([0-9]{4})`,
+        US_PASSPORT_NUMBER: `[0-9]{9}`,
+        US_STREET_ADDRESS: `\\d{1,5}\\s(?:[A-Z][a-z0-9]+\\s?)+(?:Street|St|Road|Rd|Avenue|Ave|Boulevard|Blvd|Lane|Ln|Drive|Dr|Court|Ct)`,
+        FULL_NAME: `([A-Z][a-z'-]{1,30})\\s(?:([A-Z])\\.\\s)?([A-Z][a-z'-]{1,30})`,
+    };
+
+    // Combine all patterns into a single regex
+    const combinedPattern = Object.entries(patterns)
+        .map(([name, pattern]) => `(?<${name}>\\b(?:${pattern})\\b)`)
+        .join('|');
+    
+    const combinedRegex = new RegExp(combinedPattern, 'g');
+
+    let match;
+    while ((match = combinedRegex.exec(text)) !== null) {
+        const groups = match.groups;
+        if (groups) {
+            for (const key in groups) {
+                if (groups[key]) {
+                    piiResults.push({
+                        id: `regex-pii-${idCounter++}`,
+                        word: groups[key].trim(),
+                        category: key,
+                        start: match.index,
+                        end: match.index + groups[key].length,
+                        confidence: confidenceMap[key],
+                    });
+                    // Once we find the match, we break the inner loop to avoid adding duplicates from the same match
+                    break; 
+                }
+            }
+        }
+    }
+
+    return piiResults;
+}
+
